@@ -8,6 +8,7 @@ class Config(BaseSettings):
     db_user: str
     db_password: str
     db_name: str
+    token: str
 
 
 config = Config()
