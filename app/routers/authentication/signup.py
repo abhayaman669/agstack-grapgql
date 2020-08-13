@@ -1,3 +1,4 @@
+import bcrypt
 from fastapi import APIRouter
 from pydantic import BaseModel
 
@@ -54,11 +55,14 @@ async def signup(user_data: UserData):
             "detail": "Password should be atleast 12 character long."
         }
 
+    # Hashing password
+    hash_password = bcrypt.hashpw(user_data.password, bcrypt.gensalt())
+
     # Creating user
     doc = {}
     doc["username"] = user_data.username
     doc["email"] = user_data.email
-    doc["password"] = user_data.password
+    doc["password"] = hash_password
 
     users.insert(doc)
     return {

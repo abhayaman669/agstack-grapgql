@@ -1,9 +1,49 @@
+import bcrypt
 from fastapi import APIRouter
+from pydantic import BaseModel
+
+from app import get_db
+from app.config import config
 
 
 router = APIRouter()
 
 
-@router.get("/")
-async def login():
-    return "Yep this is working"
+class UserData(BaseModel):
+    username: str
+    password: str
+    token: str
+
+
+@router.post("/")
+async def login(user_data: UserData):
+
+    # Validating token
+    if user_data.token != config.token:
+        return {
+            "status": "Failed",
+            "detail": "Invalid token"
+        }
+
+    db = get_db()
+    users = db.users
+
+    # Validating username
+    user = users.find_one({"username": user_data.username})
+    if not user:
+        return {
+            "status": "Failed",
+            "detail": "Invalid username"
+        }
+
+    # Validating password
+    if not bcrypt.checkpw(user_data.password, user["password"]):
+        return {
+            "status": "Failed",
+            "detail": "Invalid password"
+        }
+
+    return {
+        "status": "Success",
+        "access_token": "this is access token"
+    }
