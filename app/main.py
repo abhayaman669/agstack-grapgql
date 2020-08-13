@@ -2,14 +2,13 @@ import uvicorn
 from fastapi import FastAPI
 
 from app.config import config
+from app.routers.authentication import login
 
 
 app = FastAPI()
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+app.include_router(login.router, prefix="/login")
 
 
 if __name__ == '__main__':
