@@ -1,3 +1,4 @@
+import jwt
 import bcrypt
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -43,7 +44,13 @@ async def login(user_data: UserData):
             "detail": "Invalid password"
         }
 
+    # Generating access_token
+    access_token = jwt.encode(
+            {"username": user["username"]},
+            key=config.jwt_secret_key
+    ).decode("utf-8")
+
     return {
         "status": "Success",
-        "access_token": "this is access token"
+        "access_token": access_token
     }

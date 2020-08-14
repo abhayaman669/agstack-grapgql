@@ -9,6 +9,7 @@ class Config(BaseSettings):
     db_password: str
     db_name: str
     token: str
+    jwt_secret_key: str
 
 
 config = Config()
