@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 import bcrypt
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -59,12 +61,15 @@ async def signup(user_data: UserData):
     hash_password = bcrypt.hashpw(user_data.password, bcrypt.gensalt())
 
     # Creating user
-    doc = {}
-    doc["username"] = user_data.username
-    doc["email"] = user_data.email
-    doc["password"] = hash_password
+    doc = dict(
+        id=str(uuid4()),
+        username=user_data.username,
+        email=user_data.email,
+        password=hash_password
+    )
 
     users.insert(doc)
+
     return {
         "status": "Success",
         "detail": "User created successfully."
