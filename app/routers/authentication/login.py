@@ -47,7 +47,7 @@ async def login(user_data: UserData):
     # Generating access_token
     access_token = jwt.encode(
             {
-                "user_id": str(user["_id"]),
+                "user_id": str(user["id"]),
                 "username": user["username"]
             },
             key=config.jwt_secret_key
