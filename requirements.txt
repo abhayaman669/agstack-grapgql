@@ -2,6 +2,6 @@ dnspython==2.0.0
 fastapi==0.61.0
 flake8==3.8.3
 py-bcrypt==0.4
-pymongo==3.11.0
 uvicorn==0.11.8
 PyJWT==1.7.1
+motor==2.2.0

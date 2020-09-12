@@ -4,8 +4,10 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordBearer
 
-from app import get_db
-from app.jwt_helper import verify_jwt, user_exists
+from app.config import config
+from app.helpers.jwt_helper import verify_jwt
+from app.db.mongodb import get_database, AsyncIOMotorClient
+from app.helpers.users_helper import check_user_with_user_id
 
 
 router = APIRouter()
@@ -22,7 +24,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 @router.post("/")
 async def timesheet_events(
-        time_data: TimeData, token: str = Depends(oauth2_scheme)):
+        time_data: TimeData,
+        token: str = Depends(oauth2_scheme),
+        db: AsyncIOMotorClient = Depends(get_database)
+):
     # verifing JWT
     jwt_data = verify_jwt(token)
     if not jwt_data:
@@ -34,12 +39,9 @@ async def timesheet_events(
     # Getting todays date
     today_date = datetime.now().date()
 
-    # Init collections
-    db = get_db()
-    timesheets = db.timesheets
-
     # Check if the user exists
-    user = user_exists(time_data.user_id)
+    user = await check_user_with_user_id(db, time_data.user_id)
+
     if not user:
         return {
             "status": "Failed",
@@ -51,7 +53,10 @@ async def timesheet_events(
         "user_id": time_data.user_id,
         "date": str(today_date)
     }
-    timesheet = timesheets.find_one(query)
+
+    timesheet = await db[config.db_name][config.timesheet_collc_name].find_one(
+        query
+    )
 
     # If there is no doc for today then create one
     if not timesheet:
@@ -60,7 +65,9 @@ async def timesheet_events(
             "status": "INACTIVE"
         }
 
-        timesheets.insert(timesheet)
+        await db[config.db_name][config.timesheet_collc_name].insert_one(
+            timesheet
+        )
     elif timesheet["status"] == "STOPPED":
         return {
             "status": "Success",
@@ -82,7 +89,7 @@ async def timesheet_events(
             }
 
         # Update doc
-        timesheets.update_one(
+        await db[config.db_name][config.timesheet_collc_name].update_one(
             query,
             {
                 "$set": {
@@ -114,7 +121,7 @@ async def timesheet_events(
         }
 
         # Update doc
-        timesheets.update_one(
+        await db[config.db_name][config.timesheet_collc_name].update_one(
             query,
             {
                 "$set": {
@@ -142,7 +149,7 @@ async def timesheet_events(
         breaks[index]["to"] = time_data.timestamp
 
         # Update doc
-        timesheets.update_one(
+        await db[config.db_name][config.timesheet_collc_name].update_one(
             query,
             {
                 "$set": {
@@ -165,7 +172,7 @@ async def timesheet_events(
             }
 
         # Update doc
-        timesheets.update_one(
+        await db[config.db_name][config.timesheet_collc_name].update_one(
             query,
             {
                 "$set": {

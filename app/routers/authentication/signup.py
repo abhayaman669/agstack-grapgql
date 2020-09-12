@@ -1,11 +1,16 @@
 from uuid import uuid4
 
 import bcrypt
-from fastapi import APIRouter
 from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 
-from app import get_db
 from app.config import config
+from app.db.mongodb import get_database, AsyncIOMotorClient
+from app.helpers.users_helper import (
+    check_user_with_email,
+    check_user_with_username,
+    create_new_user
+)
 
 
 router = APIRouter()
@@ -19,7 +24,10 @@ class UserData(BaseModel):
 
 
 @router.post("/")
-async def signup(user_data: UserData):
+async def signup(
+    user_data: UserData,
+    db: AsyncIOMotorClient = Depends(get_database)
+):
 
     # Validating token
     if user_data.token != config.token:
@@ -28,21 +36,17 @@ async def signup(user_data: UserData):
             "detail": "Invalid token"
         }
 
-    db = get_db()
-    users = db.users
-
     # Validating email
-    user = users.find_one({"email": user_data.email})
-    if user:
+    email_check = await check_user_with_email(db, user_data.email)
+    username_check = await check_user_with_username(db, user_data.username)
+
+    if email_check:
         return {
             "status": "Failed",
             "in": "email",
             "detail": "Email already in use."
         }
-
-    # Validating username
-    user = users.find_one({"username": user_data.username})
-    if user:
+    elif username_check:
         return {
             "status": "Failed",
             "in": "username",
@@ -61,14 +65,12 @@ async def signup(user_data: UserData):
     hash_password = bcrypt.hashpw(user_data.password, bcrypt.gensalt())
 
     # Creating user
-    doc = dict(
-        id=str(uuid4()),
-        username=user_data.username,
-        email=user_data.email,
-        password=hash_password
+    await create_new_user(
+        db,
+        user_data.username,
+        user_data.email,
+        hash_password
     )
-
-    users.insert(doc)
 
     return {
         "status": "Success",

@@ -1,10 +1,9 @@
-import jwt
-import bcrypt
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app import get_db
 from app.config import config
+from app.db.mongodb import get_database, AsyncIOMotorClient
+from app.helpers.users_helper import get_authorize_user_jwt
 
 
 router = APIRouter()
@@ -17,7 +16,10 @@ class UserData(BaseModel):
 
 
 @router.post("/")
-async def login(user_data: UserData):
+async def login(
+    user_data: UserData,
+    db: AsyncIOMotorClient = Depends(get_database)
+):
 
     # Validating token
     if user_data.token != config.token:
@@ -26,34 +28,8 @@ async def login(user_data: UserData):
             "detail": "Invalid token"
         }
 
-    db = get_db()
-    users = db.users
-
     # Validating username
-    user = users.find_one({"username": user_data.username})
-    if not user:
-        return {
-            "status": "Failed",
-            "detail": "Invalid username"
-        }
+    user = await get_authorize_user_jwt(
+        db, user_data.username, user_data.password)
 
-    # Validating password
-    if not bcrypt.checkpw(user_data.password, user["password"]):
-        return {
-            "status": "Failed",
-            "detail": "Invalid password"
-        }
-
-    # Generating access_token
-    access_token = jwt.encode(
-            {
-                "user_id": str(user["id"]),
-                "username": user["username"]
-            },
-            key=config.jwt_secret_key
-    ).decode("utf-8")
-
-    return {
-        "status": "Success",
-        "access_token": access_token
-    }
+    return user

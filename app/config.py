@@ -10,6 +10,8 @@ class Config(BaseSettings):
     db_name: str
     token: str
     jwt_secret_key: str
+    user_collection_name: str = "users"
+    timesheet_collc_name: str = "timesheet"
 
 
 config = Config()
