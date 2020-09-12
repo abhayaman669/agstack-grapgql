@@ -30,8 +30,13 @@ async def list_users(
     users_coll = []
     async for user in users_list:
         users_coll.append({
+            "user_id": str(user["_id"]),
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "phone": user["phone"],
+            "user_type": user["user_type"],
             "username": user["username"],
-            "user_id": str(user["_id"])
+            "email": user["email"],
         })
 
     return {

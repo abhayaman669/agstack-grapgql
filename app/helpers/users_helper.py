@@ -82,10 +82,21 @@ async def check_user_with_user_id(
 
 
 async def create_new_user(
-        conn: AsyncIOMotorClient, username, email, password_hash
+        conn: AsyncIOMotorClient,
+        first_name,
+        last_name,
+        phone,
+        user_type,
+        username,
+        email,
+        password_hash
 ):
 
     data = dict(
+        first_name=first_name,
+        last_name=last_name,
+        phone=phone,
+        user_type=user_type,
         username=username,
         email=email,
         password=password_hash
