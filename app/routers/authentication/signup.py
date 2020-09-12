@@ -18,6 +18,10 @@ router = APIRouter()
 
 class UserData(BaseModel):
     username: str
+    first_name: str
+    last_name: str
+    phone: str
+    user_type: str
     email: str
     password: str
     token: str
@@ -67,6 +71,10 @@ async def signup(
     # Creating user
     await create_new_user(
         db,
+        user_data.first_name,
+        user_data.last_name,
+        user_data.phone,
+        user_data.user_type,
         user_data.username,
         user_data.email,
         hash_password
