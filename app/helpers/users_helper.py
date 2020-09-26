@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import jwt
 import bcrypt
 from bson import ObjectId
@@ -29,7 +27,8 @@ async def get_authorize_user_jwt(conn: AsyncIOMotorClient, username, password):
     access_token = jwt.encode(
             {
                 "user_id": str(user["_id"]),
-                "username": user["username"]
+                "username": user["username"],
+                "user_type": user["user_type"]
             },
             key=config.jwt_secret_key
     ).decode("utf-8")
