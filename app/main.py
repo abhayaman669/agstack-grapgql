@@ -3,7 +3,7 @@ from fastapi import FastAPI
 
 from app.config import config
 from app.routers.authentication import login, signup
-from app.routers import timesheet, users
+from app.routers import timesheet, users, profile, inks, papers
 from app.db.mongodb_utils import connect_to_mongo, close_mongo_connection
 
 
@@ -21,7 +21,11 @@ app.include_router(timesheet.router, prefix="/timesheet")
 
 app.include_router(users.router, prefix="/users")
 
-# app.include_router(profile.router, prefix="/profile")
+app.include_router(profile.router, prefix="/profile")
+
+app.include_router(inks.router, prefix="/inks")
+
+app.include_router(papers.router, prefix="/papers")
 
 
 if __name__ == '__main__':
